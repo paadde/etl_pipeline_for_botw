@@ -18,3 +18,8 @@ def column_creator(df, column, new_column):
     # Create new column names with the specified prefix
     column_names = [f'{new_column}{i+1}' for i in range(max_element)]
     return column_names
+
+
+def get_db_url(user, password, host, db_name):
+    """ Construct database url from the variables """
+    return f'postgresql://{user}:{password}@{host}/{db_name}'
