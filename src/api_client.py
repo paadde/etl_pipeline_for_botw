@@ -8,5 +8,7 @@ def get_monster_data():
     retrieve monster data from the API and returns the value in a json format
     """
     url = f'{API_BASE}{CATEGORIES[3]}'
-    response = requests.get(url).json()
+    response = requests.get(url)
+    response.raise_for_status()
+    response = response.json()
     return response

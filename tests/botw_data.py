@@ -32,7 +32,9 @@ monster_data_df[(monster_data_df['drops'] == '[]')]
 
 # create additional columns to extend drops column
 max_columns = monster_data_df['drops'].apply(len).max()
+print(max_columns)
 drops_column = [f'drops{i+1}' for i in range(max_columns)]
+print(drops_column)
 drops_df = pd.DataFrame(
         monster_data_df['drops'].to_list(), columns=drops_column
         )

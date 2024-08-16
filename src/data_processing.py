@@ -1,4 +1,5 @@
 import pandas as pd
+from src.tools_functions import column_creator
 
 
 def transform_monster_data(monster_data):
@@ -9,88 +10,58 @@ def transform_monster_data(monster_data):
     # normalize the data and save it into a dataframe
     monster_data_df = pd.json_normalize(monster_data['data'])
 
-    # fill missing values as empty list
-    monster_data_df['drops'] = monster_data_df['drops'].fillna('[]')
+    # Drop unrelated columns
+    monster_data_df = monster_data_df.drop(columns=['category', 'image'])
 
-    # fill missing values as empty list for common_locations column
+    # Ensure 'drops' and 'common_locations' columns contain lists
+    monster_data_df['drops'] = (
+            monster_data_df['drops']
+            .apply(lambda x: x if isinstance(x, list) else [])
+            )
+
     monster_data_df['common_locations'] = (
-        monster_data_df['common_locations'].fillna('[]')
+            monster_data_df['common_locations']
+            .apply(lambda x: x if isinstance(x, list) else [])
+            )
+
+    # Create additional columns to extend the columns
+    drops_columns = column_creator(monster_data_df, 'drops', 'drop')
+
+    location_columns = column_creator(
+            monster_data_df, 'common_locations', 'location'
+            )
+
+    drops_df = pd.DataFrame(
+        monster_data_df['drops'].to_list(),
+        columns=drops_columns
         )
 
-
-
-# create additional columns to extend drops column
-max_columns = monster_data_df['drops'].apply(len).max()
-drops_column = [f'drops{i+1}' for i in range(max_columns)]
-drops_df = pd.DataFrame(
-        monster_data_df['drops'].to_list(), columns=drops_column
+    location_df = pd.DataFrame(
+        monster_data_df['common_locations'].to_list(),
+        columns=location_columns
         )
 
-# Combine drops_df to the main data frame and drop original 'drops' column
-monster_data_df = (
-        pd.concat([monster_data_df, drops_df], axis=1)
-        .drop(columns='drops')
-        )
+    # Combine new dfs to the main data frame and drop original columns
+    monster_data_df = (
+            pd.concat([monster_data_df, drops_df], axis=1)
+            .drop(columns='drops')
+            )
 
+    monster_data_df = (
+            pd.concat([monster_data_df, location_df], axis=1)
+            .drop(columns='common_locations')
+            )
 
-# create additional columns to extend common_locations column
-max_columns_location = (
-        monster_data_df['common_locations'].apply(len).max()
-        )
-location_column = [f'location{i+1}' for i in range(max_columns_location)]
-location_df = pd.DataFrame(
-        monster_data_df['common_locations'].to_list(), columns=location_column
-        )
-# Combine both loation_df to the main data frame
-monster_data_df = (
-        pd.concat([monster_data_df, location_df], axis=1)
-        .drop(columns='common_locations')
-        )
-monster_data_df.info()
+    # Check which columns exist in the DataFrame and only reorder those
+    expected_columns = (
+            ['id', 'name',
+             'description'] + location_columns + ['dlc'] + drops_columns
+            )
 
-# Drop unrelated columns
-monster_data_df = monster_data_df.drop(columns=['category', 'image'])
+    existing_columns = (
+            [col for col in expected_columns if col in monster_data_df.columns]
+            )
 
-# reorder columns
-monster_data_df = monster_data_df[['id', 'name', 'description', 'location1',
-                                   'location2', 'dlc', 'drops1', 'drops2',
-                                   'drops3', 'drops4', 'drops5', 'drops6',
-                                   'drops7', 'drops8', 'drops9', 'drops10',
-                                   'drops11', 'drops12']]
-monster_data_df.info()
+    monster_data_df = monster_data_df[existing_columns]
 
-
-# Create a function to create additional custom columns based on number of
-# variables
-
-
-def column_creator(df, column, new_column):
-    """
-    Create an x number of columns based on the maximum number of elemens found
-    in a the specified dataframe column.
-
-    Parameters:
-    df: The dataframe containing the data
-    column: The name of column to which elements are to be counted
-    new_column: The prefix for the generated column names
-    """
-
-    # Calculate the maximum elements on a specified dataframe and column
-    max_element = df[column].apply(len).max()
-
-    # Create new column names with the specified prefix
-    column_names = [f'{new_column}{i+1}' for i in range(max_element)]
-    return column_names
-
-
-test_drop = column_creator(monster_data_df2, 'drops', 'dropss')
-print(test_drop)
-
-drops_df2 = pd.DataFrame(
-        monster_data_df2['drops']
-        .to_list(),
-        columns=column_creator(monster_data_df2, 'drops', 'dropss')
-        )
-
-drops_df2.head()
-drops_df2.info()
+    return monster_data_df
