@@ -1,4 +1,5 @@
 import pandas as pd
+import logging
 from src.tools_functions import column_creator
 
 
@@ -6,6 +7,8 @@ def transform_monster_data(monster_data):
     """
     This do transformational data automation for the fetched data
     """
+    logger = logging.getLogger(__name__)
+    logger.info('Transforming monster_data...')
 
     # normalize the data and save it into a dataframe
     monster_data_df = pd.json_normalize(monster_data['data'])
@@ -63,5 +66,9 @@ def transform_monster_data(monster_data):
             )
 
     monster_data_df = monster_data_df[existing_columns]
+    logger.info(
+            f'Successfully transformed the df with dimension of {
+                monster_data_df.shape}'
+            )
 
     return monster_data_df
