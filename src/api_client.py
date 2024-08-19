@@ -1,17 +1,20 @@
 import requests
 import logging
 from config.settings import API_BASE
-from config.settings import CATEGORIES
 
 
-def get_monster_data():
+def get_data(category):
     """
     retrieve monster data from the API and returns the value in a json format
+
+    Parameter:
+        category: here is the following available data that can be pulled
+        ['creatures', 'equipment', 'materials', 'monsters', 'treasure']
     """
     logger = logging.getLogger(__name__)
 
-    logger.info(f'Trying to extract {CATEGORIES[3]} data from the API...')
-    url = f'{API_BASE}{CATEGORIES[3]}'
+    logger.info(f'Trying to extract {category} data from the API...')
+    url = f'{API_BASE}{category}'
 
     try:
         response = requests.get(url)
@@ -26,5 +29,7 @@ def get_monster_data():
         logger.info('Data extraction aborted.')
 
     response = response.json()
-    logger.info("The data was successfuly saved to variable 'response'.")
+    logger.info(
+            f"{category} data was successfuly saved to a variable."
+            )
     return response

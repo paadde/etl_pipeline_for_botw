@@ -57,8 +57,8 @@ def transform_monster_data(monster_data):
 
     # Check which columns exist in the DataFrame and only reorder those
     expected_columns = (
-            ['id', 'name',
-             'description'] + location_columns + ['dlc'] + drops_columns
+            ['id', 'name'] + location_columns + ['dlc'] + drops_columns + [
+                'description']
             )
 
     existing_columns = (
@@ -72,3 +72,63 @@ def transform_monster_data(monster_data):
             )
 
     return monster_data_df
+
+
+def transform_equipment_data(equipment_data):
+    """
+    This do transformational data automation for the fetched data
+
+    Parameter:
+        equipment_data: data that has been requested from botw API
+    """
+    logger = logging.getLogger(__name__)
+    logger.info('Transforming equipment_data...')
+
+    # normalize json into a Dataframe
+    equipment_df = pd.json_normalize(equipment_data['data'], sep='_')
+
+    # drop 'category' and 'image' column
+    equipment_df = equipment_df.drop(columns=['category', 'image'])
+
+    # Expand common_locations into different 'location' columns
+    equipment_df['common_locations'] = (
+            equipment_df['common_locations']
+            .apply(lambda x: x if isinstance(x, list) else [])
+            )
+
+    # create addional columns
+    location_columns = column_creator(
+            equipment_df, 'common_locations', 'location'
+            )
+
+    # create a new dataframe for the created new columns
+    location_df = pd.DataFrame(
+            equipment_df['common_locations'].to_list(),
+            columns=location_columns
+            )
+
+    # merge the new location column to the main dataframe then drop original
+    # column
+    equipment_df = (
+            pd.concat([equipment_df, location_df], axis=1)
+            .drop(columns='common_locations')
+            )
+
+    # reorder the columns of equipment_df dataframe
+    expected_columns = (
+            ['id', 'name'] + location_columns + ['dlc', 'properties_attack',
+                                                 'properties_defense',
+                                                 'description']
+            )
+
+    existing_columns = (
+            [col for col in expected_columns if col in equipment_df.columns]
+            )
+
+    equipment_df = equipment_df[existing_columns]
+    logger.info(
+                f'Successfully transformed the df with dimension of {
+                    equipment_df.shape}'
+                )
+
+    return equipment_df
