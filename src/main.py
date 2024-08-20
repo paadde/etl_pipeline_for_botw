@@ -4,6 +4,9 @@ import logging
 from src.api_client import get_data
 from src.data_processing import transform_monster_data
 from src.data_processing import transform_equipment_data
+from src.data_processing import transform_creatures_data
+from src.data_processing import transform_materials_data
+from src.data_processing import transform_treasure_data
 from src.database import upload_to_db
 from config.settings import CATEGORIES
 
@@ -33,13 +36,19 @@ def main():
     logger.info('Starting data transformation...')
     monster_df = transform_monster_data(data['monsters'])
     equipment_df = transform_equipment_data(data['equipment'])
+    creature_df = transform_creatures_data(data['creatures'])
+    material_df = transform_materials_data(data['materials'])
+    treasure_df = transform_treasure_data(data['treasure'])
     logger.info('Transformation of data was successful.')
 
     logger.info('Uploading transformed data to the database...')
     # Create a dictionary of dataframes and table names
     botw_df = {
             'botw_monster': monster_df,
-            'botw_equipment': equipment_df
+            'botw_equipment': equipment_df,
+            'botw_creature': creature_df,
+            'botw_material': material_df,
+            'botw_treasure': treasure_df
             }
     # Upload dataframes and corresponding table names to the database
     for name, df in botw_df.items():
